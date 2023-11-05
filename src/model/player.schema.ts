@@ -3,28 +3,56 @@ import { HydratedDocument } from "mongoose";
 
 export type PlayerDocument = HydratedDocument<Player>;
 
+export interface SalaryHistory {
+  Year: number;
+  "Weekly Wage": number;
+  "Yearly Salary": number;
+  Club: string;
+  Position: string;
+  League: string;
+  Age: number;
+  "Contract Expiry": string;
+}
+
 @Schema({ collection: "players", timestamps: true })
 export class Player {
-  @Prop()
+  @Prop({ type: String })
   Club: string;
 
-  @Prop()
+  @Prop({ type: String })
   "Player Name": string;
 
-  @Prop()
+  @Prop({ type: Number })
   "Weekly Wage": number;
 
-  @Prop()
+  @Prop({ type: Number })
   "Yearly Salary": number;
 
-  @Prop()
+  @Prop({ type: Number })
   Age: number;
 
-  @Prop()
+  @Prop({ type: String })
   Position: string;
 
-  @Prop()
+  @Prop({ type: String })
   Nationality: string;
+
+  @Prop({
+    type: [
+      {
+        Year: { type: Number },
+        "Weekly Wage": { type: Number },
+        "Yearly Salary": { type: Number },
+        Club: { type: String },
+        Position: { type: String },
+        League: { type: String },
+        Age: { type: Number },
+        "Contract Expiry": { type: String },
+      },
+    ],
+    required: false,
+  })
+  salaryHistory?: SalaryHistory[];
 }
 
 export const PlayerSchema = SchemaFactory.createForClass(Player);

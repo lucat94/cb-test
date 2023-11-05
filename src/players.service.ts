@@ -1,10 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { Player } from "./model/player.schema";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
+import mongoose, { Model } from "mongoose";
 
 export interface FindResult {
-  docs: any;
+  docs: any[];
   totalDocs: number;
   limit: number;
   totalPages: number;
@@ -26,7 +26,9 @@ export class PlayersService {
       {
         "Player Name": { $regex: `${name}`, $options: "i" },
       },
-      {},
+      {
+        salaryHistory: 0,
+      },
       {
         skip: (page - 1) * limit,
         limit,
@@ -45,5 +47,9 @@ export class PlayersService {
       totalPages: Math.ceil(totalDocs / limit),
       limit,
     };
+  }
+  async getPlayerSalaryHistory(_id: mongoose.ObjectId) {
+    const player = await this.playerModel.findById(_id);
+    return player.salaryHistory;
   }
 }

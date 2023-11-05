@@ -4,6 +4,7 @@ import { HttpService } from "@nestjs/axios";
 import { lastValueFrom } from "rxjs";
 import { Player } from "./model/player.schema";
 import { PlayersService } from "./players.service";
+import getTableData from "./utils/getTableData";
 
 @Injectable()
 export class AppService implements OnModuleInit {
@@ -13,11 +14,13 @@ export class AppService implements OnModuleInit {
   ) {}
 
   async onModuleInit(): Promise<void> {
+    console.log("Scraping starting");
     const players = await this.getLeaguesPlayers();
 
     await this.playersService.flushAll();
-    // should implement upsert
+    // should implement upsert and cron
     await this.playersService.insertMany(players);
+    console.log("Scraping ended");
   }
 
   async getLeaguesPlayers(): Promise<Player[]> {
@@ -27,7 +30,7 @@ export class AppService implements OnModuleInit {
       //  "Ligue 1"
     ];
 
-    const players = [];
+    const players: Player[] = [];
 
     // Get /football page
     const url = "https://salarysport.com/football";
@@ -69,50 +72,41 @@ export class AppService implements OnModuleInit {
       for (const index in teamsPromises) {
         const teamPromise = teamsPromises[index];
         if (teamPromise.status === "fulfilled") {
-          // Scarping team page.
-          const $ = cheerio.load(teamPromise.value.data);
-
-          // Get table with players
-          const table = $("h3:contains('Active Squad:')").next().children();
-
-          // Get table header
-          const headerText = $(table)
-            .find("table thead th")
-            .toArray()
-            .map((el) => $(el).text());
-
-          // Retrieve table rows, excluding hidden rows that do not have the same number of columns as the header
-          const tableRows = $(table)
-            .find("table tbody tr")
-            .filter(
-              (index, element) => element.children.length === headerText.length
-            )
-            .toArray();
-
           // Mapping rows as JSON and pushing them in players array
           players.push(
-            ...tableRows.map((row) => {
-              const columns = $(row).find("td");
-              const values = columns.toArray().map((el) => $(el).text());
-              return values.reduce(
-                (acc, element, index) => {
-                  if (
-                    headerText[index] === "Yearly Salary" ||
-                    headerText[index] === "Weekly Wage"
-                  ) {
-                    acc[headerText[index]] = Number(
-                      element.replace(/,/g, "").substring(1)
-                    );
-                  } else {
-                    acc[headerText[index]] = element;
-                  }
-                  return acc;
-                },
-                { Club: teams[index] }
-              );
+            ...getTableData(teamPromise.value.data, "Active Squad:", {
+              Club: teams[index],
+              "Player Name": "",
+              "Weekly Wage": 0,
+              "Yearly Salary": 0,
+              Age: 0,
+              Position: "",
+              Nationality: "",
+              salaryHistory: [],
             })
           );
         }
+      }
+    }
+    const playersPromises = await Promise.allSettled(
+      players.map((player) =>
+        lastValueFrom(
+          this.httpService.get(
+            `${url}/player/${player["Player Name"]}`
+              .replace(/ /gi, "-")
+              .toLowerCase()
+          )
+        )
+      )
+    );
+    for (const index in playersPromises) {
+      const playerPromise = playersPromises[index];
+      if (playerPromise.status === "fulfilled") {
+        players[index].salaryHistory = getTableData(
+          playerPromise.value.data,
+          "Career Earnings:",
+          {}
+        );
       }
     }
     return players;
