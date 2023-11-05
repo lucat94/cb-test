@@ -12,13 +12,13 @@ export class Player {
   "Player Name": string;
 
   @Prop()
-  "Weekly Wage": string;
+  "Weekly Wage": number;
 
   @Prop()
-  "Yearly Salary": string;
+  "Yearly Salary": number;
 
   @Prop()
-  Age: string;
+  Age: number;
 
   @Prop()
   Position: string;

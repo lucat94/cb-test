@@ -2,19 +2,22 @@ import { Injectable, OnModuleInit } from "@nestjs/common";
 import * as cheerio from "cheerio";
 import { HttpService } from "@nestjs/axios";
 import { lastValueFrom } from "rxjs";
-import { Player } from "./player.schema";
+import { Player } from "./model/player.schema";
+import { PlayersService } from "./players.service";
 
 @Injectable()
 export class AppService implements OnModuleInit {
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly playersService: PlayersService
+  ) {}
+
   async onModuleInit(): Promise<void> {
     const players = await this.getLeaguesPlayers();
-    players;
-    console.log("players", players.length);
-  }
 
-  getHello(): string {
-    return "Hello World!";
+    await this.playersService.flushAll();
+    // should implement upsert
+    await this.playersService.insertMany(players);
   }
 
   async getLeaguesPlayers(): Promise<Player[]> {
@@ -93,7 +96,16 @@ export class AppService implements OnModuleInit {
               const values = columns.toArray().map((el) => $(el).text());
               return values.reduce(
                 (acc, element, index) => {
-                  acc[headerText[index]] = element;
+                  if (
+                    headerText[index] === "Yearly Salary" ||
+                    headerText[index] === "Weekly Wage"
+                  ) {
+                    acc[headerText[index]] = Number(
+                      element.replace(/,/g, "").substring(1)
+                    );
+                  } else {
+                    acc[headerText[index]] = element;
+                  }
                   return acc;
                 },
                 { Club: teams[index] }
