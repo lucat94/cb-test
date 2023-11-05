@@ -21,7 +21,12 @@ export class PlayersService {
     return this.playerModel.deleteMany({});
   }
 
-  async getPlayers(name, page = 1, limit = 10, sort): Promise<FindResult> {
+  async getPlayers(
+    name = "",
+    page = 1,
+    limit = 10,
+    sort = {}
+  ): Promise<FindResult> {
     const docs = await this.playerModel.find(
       {
         "Player Name": { $regex: `${name}`, $options: "i" },
@@ -30,7 +35,7 @@ export class PlayersService {
         salaryHistory: 0,
       },
       {
-        skip: (page - 1) * limit,
+        skip: (page >= 1 ? page - 1 : 0) * limit,
         limit,
         sort,
       }

@@ -1,30 +1,7 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
-
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-  
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Small project that scrape Serie A players info and salary history from [Salary Sport](https://salarysport.com/)
 
 ## Installation
 
@@ -51,23 +28,50 @@ $ npm run start:prod
 # unit tests
 $ npm run test
 
-# e2e tests
-$ npm run test:e2e
-
 # test coverage
 $ npm run test:cov
 ```
 
-## Support
+## Scraping tool
+I utilized [Cheerio](https://github.com/cheeriojs/cheerio) since the [site](https://salarysport.com) is a plain HTML site. Using other tools would be an overkill for the purpose of this project.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Docker
 
-## Stay in touch
+The project requires a local MongoDB instance running to store players information. A docker-compose.yml file is provided to facilitate the setup.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+1. [Install Docker Compose](https://docs.docker.com/compose/install/)
+2. Run all containers with `docker-compose up`
 
-## License
 
-  Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## API Reference
+
+#### Get players
+
+```http
+  GET /players
+```
+
+| Query Parameters | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `name` | `string` | **Optional**. Filter by name |
+| `limit` | `number` | **Optional**. Set the maximum number of players per returned |
+| `page` | `number` | **Optional**. Specify the page number for pagination |
+| `sort` | `string` | **Optional**. Sort players based on the specified attribute |
+| `sortType` | `string` | **Optional**. Define the sorting order ("ASC" for ascending, "DESC" for descending) |
+
+#### Get player salary
+
+```http
+  GET /players/{id}/salary-history
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `id`      | `string` | **Required**. Id of item to fetch |
+
+## Future development
+While this project was created under time constraints, there are areas that could benefit from further refinement and enhancement. In the future, considering an update for the project, the following improvements are suggested:
+
+1) Scheduled Scraping: Transfer the scraping process into a cron job to automate data updates. Utilize the upsert operation instead of the current deleteMany - insertMany approach to enhance efficiency.
+
+2) Test Coverage: Expand the test coverage to ensure a more robust and reliable codebase. Additional tests can be implemented to cover various scenarios and edge cases, enhancing the overall stability of the application.

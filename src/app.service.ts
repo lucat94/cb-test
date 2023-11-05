@@ -14,6 +14,10 @@ export class AppService implements OnModuleInit {
   ) {}
 
   async onModuleInit(): Promise<void> {
+    await this.scrapeData();
+  }
+
+  async scrapeData() {
     console.log("Scraping starting");
     const players = await this.getLeaguesPlayers();
 
@@ -68,11 +72,12 @@ export class AppService implements OnModuleInit {
         )
       );
 
-      // Filter only for fulfilled api call, teams rejected api are ignored.
       for (const index in teamsPromises) {
         const teamPromise = teamsPromises[index];
+
+        // Filter only for fulfilled api call, teams rejected api are ignored.
         if (teamPromise.status === "fulfilled") {
-          // Mapping rows as JSON and pushing them in players array
+          // Mapping results and pushing them in players array
           players.push(
             ...getTableData(teamPromise.value.data, "Active Squad:", {
               Club: teams[index],
@@ -88,6 +93,8 @@ export class AppService implements OnModuleInit {
         }
       }
     }
+
+    // Retrieve players salary history
     const playersPromises = await Promise.allSettled(
       players.map((player) =>
         lastValueFrom(
@@ -102,6 +109,7 @@ export class AppService implements OnModuleInit {
     for (const index in playersPromises) {
       const playerPromise = playersPromises[index];
       if (playerPromise.status === "fulfilled") {
+        // Mapping results and pushing them in players array
         players[index].salaryHistory = getTableData(
           playerPromise.value.data,
           "Career Earnings:",
